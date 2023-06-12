@@ -1,45 +1,34 @@
+import { IProduct } from "@/contexts/CartContext"
+import { useCart } from "@/hooks/useCart"
 import { stripe } from "@/lib/stripe"
 import { ImageContainer, ProductContainer, ProductDetails } from "@/styles/pages/product"
 import axios from "axios"
 import { GetStaticPaths, GetStaticProps } from "next"
 import Head from "next/head"
 import Image from "next/image"
+import { useRouter } from "next/router"
 import { useState } from "react"
 
 import Stripe from "stripe"
 
 interface ProductProps {
-  product: {
-    id: string
-    name: string
-    imageUrl: string
-    price: string
-    description: string
-    defaultPriceId: string
-  }
+  product: IProduct
 }
 export default function Product({product}:ProductProps){
-const [creatingSession, setCreatingSession] = useState(false)
+  const { isFallback } = useRouter();
 
-  async function handleBuyProduct(){
-   try{
-    setCreatingSession(true)
-      const response = await axios.post('/api/checkout', {
-        priceId: product.defaultPriceId
-      })
+  const { addToCart, checkIfProductExists } = useCart();
 
-      const {checkoutUrl} = response.data
+if (isFallback) {
+  return <p>Loading...</p>;
+}
 
-      window.location.href = checkoutUrl
-   }catch(err){
-     setCreatingSession(false)
-    alert('failed')
-   }
-  }
+const itemAlreadyInCart = checkIfProductExists(product.id);
+
 
   return(
     <><Head>
-        <title>{product.name} | Ignite Shop</title>
+        <title>{`${product.name} | Ignite Shop`}</title>
       </Head>
    <ProductContainer>
     <ImageContainer>
@@ -51,7 +40,13 @@ const [creatingSession, setCreatingSession] = useState(false)
      <span>{product.price}</span>
      <p>{product.description}</p>
 
-<button disabled={creatingSession} onClick={handleBuyProduct}>Buy Now</button>
+<button disabled={itemAlreadyInCart} onClick={() => addToCart(product)}>
+
+
+{itemAlreadyInCart
+? "Product already in cart"
+: "Add to bag"}
+</button>
     </ProductDetails>
    </ProductContainer>
    </>

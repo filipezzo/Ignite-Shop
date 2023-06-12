@@ -1,24 +1,21 @@
 import { HomeContainer } from "@/styles/pages/home"
-
 import { useKeenSlider} from 'keen-slider/react'
 import { Product } from "@/styles/pages/home"
 import Image from "next/image"
-
-
 import 'keen-slider/keen-slider.min.css'
 import { GetStaticProps } from "next"
 import {stripe} from '../lib/stripe'
 import Stripe from "stripe"
 import Link from "next/link"
 import Head from "next/head"
+import { MouseEvent } from "react"
+import { CartButton } from "@/components/CartButton"
+import { useCart } from "@/hooks/useCart"
+import { IProduct } from "@/contexts/CartContext"
+
 
 interface HomeProps{
-  products:{
-    id: number,
-    name: string,
-    imageUrl: string,
-    price: string,
-  }[]
+  products:IProduct[]
 }
 
 export default function Home({products}:HomeProps) {
@@ -29,6 +26,14 @@ export default function Home({products}:HomeProps) {
       spacing: 48,
     }
   })
+
+  const {addToCart, checkIfProductExists} = useCart()
+
+  function handleAddToCart(e:MouseEvent<HTMLButtonElement>, product: IProduct){
+    e.preventDefault()
+    addToCart(product)
+  }
+
   return (
     <>
     <Head>
@@ -39,17 +44,24 @@ export default function Home({products}:HomeProps) {
       {products.map(product =>{
         return(
           <Link key={product.id} href={`/product/${product.id}`} prefetch={false}>
-             <Product className="keen-slider__slide">
+            <Product className="keen-slider__slide">
     <Image
-     src={product.imageUrl}
-     width={520}
-     height={480}
-     alt=''/>
+      src={product.imageUrl}
+      width={520}
+      height={480}
+      alt=''/>
 
-     <footer>
-      <strong>{product.name}</strong>
-      <span>{product.price}</span>
-     </footer>
+      <footer>
+      <div>
+        <strong>{product.name}</strong>
+          <span>{product.price}</span>
+      </div>
+      <CartButton 
+      color={"green"} 
+      onClick={(e) => handleAddToCart(e, product)}
+      disabled={checkIfProductExists(product.id)}
+      />
+      </footer>
       </Product>
       </Link>
 
@@ -71,10 +83,12 @@ export const getStaticProps : GetStaticProps = async ()=>{
       id: product.id,
       name: product.name, 
       imageUrl: product.images[0],
-      price: new Intl.NumberFormat('eng', {
+      price: new Intl.NumberFormat('en-US', {
         style: 'currency',
         currency: 'USD',
-      }).format(price.unit_amount as number / 100), 
+      }).format(price.unit_amount as number / 100),
+      numberPrice: price.unit_amount/ 100,
+      defaultPriceId: price.id,
     }
   })
 

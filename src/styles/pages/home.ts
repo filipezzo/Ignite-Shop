@@ -41,6 +41,12 @@ footer: {
     fontSize: '$xl',
     },
 
+    div:{
+      display: 'flex',
+      flexDirection: 'column',
+      gap: 4,
+    },
+
   strong:{
     fontWeight: 700,
     fontSize: '$lg',
